@@ -35,4 +35,10 @@ export const customChains: Record<string, ReturnType<typeof defineChain>> = {
     nativeCurrency: { name: "USDC", symbol: "USDC", decimals: 18 },
     rpcUrls: { default: { http: ["https://rpc.testnet.arc.network"] } },
   }),
+  boolTestnet: defineChain({
+    id: 481,
+    name: "Bool Testnet",
+    nativeCurrency: { name: "BOL", symbol: "BOL", decimals: 18 },
+    rpcUrls: { default: { http: ["https://betatest-rpc-node-ws.bool.network"] } },
+  }),
 };

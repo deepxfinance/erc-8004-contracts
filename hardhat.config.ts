@@ -473,6 +473,15 @@ const config: HardhatUserConfig = {
           apiUrl: "https://testnet.arcscan.app/api",
         }
       }
+    },
+    481: {
+      name: "Bool Testnet",
+      blockExplorers: {
+        blockscout: {
+          url: "https://beta-testnet.boolscan.com/",
+          apiUrl: "https://beta-testnet.boolscan.com//api",
+        }
+      }
     }
   },
   solidity: {
@@ -514,13 +523,13 @@ const config: HardhatUserConfig = {
     sepolia: {
       type: "http",
       chainType: "l1",
-      url: process.env.SEPOLIA_RPC_URL || "",
+      url: process.env.SEPOLIA_RPC_URL || "https://ethereum-sepolia-rpc.publicnode.com",
       accounts: process.env.SEPOLIA_PRIVATE_KEY ? [process.env.SEPOLIA_PRIVATE_KEY] : [],
     },
     mainnet: {
       type: "http",
       chainType: "l1",
-      url: process.env.MAINNET_RPC_URL || "",
+      url: process.env.MAINNET_RPC_URL || "https://eth.blockrazor.xyz",
       accounts: process.env.MAINNET_PRIVATE_KEY ? [process.env.MAINNET_PRIVATE_KEY] : [],
     },
     baseSepolia: {
@@ -792,6 +801,18 @@ const config: HardhatUserConfig = {
       chainType: "l1",
       url: process.env.ARC_TESTNET_RPC_URL || "https://rpc.testnet.arc.network",
       accounts: process.env.ARC_TESTNET_PRIVATE_KEY ? [process.env.ARC_TESTNET_PRIVATE_KEY] : [],
+    },
+    deepxDevnet: {
+      type: "http",
+      chainType: "l1",
+      url: process.env.DEEPX_DEVNET_RPC_URL || "https://alpha.megaeth.com/rpc",
+      accounts: process.env.DEEPX_DEVNET_PRIVATE_KEY ? [process.env.DEEPX_DEVNET_PRIVATE_KEY] : [],
+    },
+    boolTestnet: {
+      type: "http",
+      chainType: "l1",
+      url: process.env.BOOL_TESTNET_RPC_URL || "https://betatest-rpc-node-ws.bool.network",
+      accounts: process.env.BOOL_TESTNET_PRIVATE_KEY ? [process.env.BOOL_TESTNET_PRIVATE_KEY] : [],
     },
   },
 };
