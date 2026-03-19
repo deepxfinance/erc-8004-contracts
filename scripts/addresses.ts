@@ -124,7 +124,7 @@ export const SAFE_SINGLETON_FACTORY = "0x914d7Fec6aaC8cd542e72Bca78B30650d45643d
 /**
  * Expected owner address
  */
-export const EXPECTED_OWNER = "0x547289319C3e6aedB179C0b8e8aF0B5ACd062603" as const;
+export const EXPECTED_OWNER = "0x781ED35B167068c93dFAdAb41dfb680eDaca4E50" as const;
 
 /**
  * Check if a chainId is a mainnet

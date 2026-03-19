@@ -1,61 +1,34 @@
 import hre from "hardhat";
 import {
+  createPublicClient,
+  createWalletClient,
   encodeAbiParameters,
   encodeFunctionData,
   Hex,
-  createPublicClient,
-  createWalletClient,
   http,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { customChains } from "./custom-chains";
 import dotenv from "dotenv";
-import fs from "fs";
-import path from "path";
-import { getMinimalUUPSContract, getNetworkType } from "./addresses";
+import { EXPECTED_OWNER, getMinimalUUPSContract, getNetworkType } from "./addresses";
+import {
+  Address,
+  TxHash,
+  assertRecordedAddress,
+  createEmptyDeployment,
+  ensureCodeExists,
+  getDeploymentOutputPath,
+  loadDeployment,
+  printDeploymentSummary,
+  saveDeployment,
+  toPkEnvVar,
+  with0x,
+} from "./deployment";
 
 dotenv.config();
 
-function toPkEnvVar(networkName: string): string {
-  return `${networkName.replace(/([A-Z])/g, "_$1").toUpperCase()}_PRIVATE_KEY`;
-}
-
-function with0x(value: string): `0x${string}` {
-  return (value.startsWith("0x") ? value : `0x${value}`) as `0x${string}`;
-}
-
-function printDeploymentSummary(deployment: any, outputPath: string) {
-  console.log("=".repeat(80));
-  console.log("DEPLOYMENT SUMMARY");
-  console.log("=".repeat(80));
-  console.log("");
-  console.log("Deployment record:", outputPath);
-  console.log("Mode:", deployment.mode);
-  console.log("Chain ID:", deployment.chainId);
-  console.log("Network:", deployment.networkName);
-  console.log("Deployer:", deployment.deployer);
-  console.log("");
-  if (deployment.proxies) {
-    console.log("Proxy Addresses:");
-    console.log("  IdentityRegistry:    ", deployment.proxies.identityRegistry);
-    console.log("  ReputationRegistry:  ", deployment.proxies.reputationRegistry);
-    console.log("  ValidationRegistry:  ", deployment.proxies.validationRegistry);
-    console.log("");
-  }
-  if (deployment.implementations) {
-    console.log("Implementation Addresses:");
-    console.log("  IdentityRegistry:    ", deployment.implementations.identityRegistry);
-    console.log("  ReputationRegistry:  ", deployment.implementations.reputationRegistry);
-    console.log("  ValidationRegistry:  ", deployment.implementations.validationRegistry);
-    console.log("");
-  }
-}
-
-/**
- * Gets the full deployment bytecode for ERC1967Proxy
- */
 async function getProxyBytecode(
-  implementationAddress: string,
+  implementationAddress: Address,
   initCalldata: Hex
 ): Promise<Hex> {
   const proxyArtifact = await hre.artifacts.readArtifact("ERC1967Proxy");
@@ -65,7 +38,7 @@ async function getProxyBytecode(
       { name: "implementation", type: "address" },
       { name: "data", type: "bytes" },
     ],
-    [implementationAddress as `0x${string}`, initCalldata]
+    [implementationAddress, initCalldata]
   );
 
   return (proxyArtifact.bytecode + constructorArgs.slice(2)) as Hex;
@@ -76,30 +49,18 @@ async function deployBytecode(
   publicClient: any,
   bytecode: Hex,
   label: string
-): Promise<{ address: `0x${string}`; txHash: `0x${string}` }> {
-  const txHash = await deployer.sendTransaction({
-    data: bytecode,
-  });
-
+): Promise<{ address: Address; txHash: TxHash }> {
+  const txHash = await deployer.sendTransaction({ data: bytecode });
   const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
-  const address = receipt.contractAddress as `0x${string}` | undefined;
+  const address = receipt.contractAddress as Address | undefined;
 
-  if (!address) {
+  if (!address || receipt.status !== "success") {
     throw new Error(`${label} deployment failed: contractAddress missing in receipt (${txHash})`);
   }
 
   return { address, txHash };
 }
 
-/**
- * Random-address deployment (no CREATE2 factory)
- *
- * Process:
- * 1. Deploy MinimalUUPS placeholder via normal CREATE
- * 2. Deploy ERC1967 proxies via normal CREATE (pointing to MinimalUUPS)
- * 3. Deploy real implementation contracts via normal CREATE
- * 4. Write deployment info to JSON file
- */
 async function main() {
   const networkIdx = process.argv.indexOf("--network");
   const networkName = networkIdx !== -1 ? process.argv[networkIdx + 1] : undefined;
@@ -138,19 +99,27 @@ async function main() {
   }
 
   const chainId = await publicClient.getChainId();
+  const resolvedNetworkName = networkName ?? "hardhat";
   const networkType = getNetworkType(chainId);
   const minimalUUPSContract = getMinimalUUPSContract(chainId);
-  const outputDir = path.join(process.cwd(), "deployments");
-  const outputPath = path.join(outputDir, `chain-${chainId}.json`);
+  const outputPath = getDeploymentOutputPath(chainId);
 
-  if (fs.existsSync(outputPath)) {
-    const existingRaw = fs.readFileSync(outputPath, "utf-8");
-    const existing = JSON.parse(existingRaw);
+  let deployment = loadDeployment(outputPath);
+  if (!deployment) {
+    deployment = createEmptyDeployment(
+      chainId,
+      resolvedNetworkName,
+      networkType,
+      deployer.account.address as Address,
+      minimalUUPSContract
+    );
+  } else {
+    if (deployment.chainId !== chainId) {
+      throw new Error(`Deployment record chainId mismatch: expected ${chainId}, found ${deployment.chainId}`);
+    }
     console.log(`⚠️  Found existing deployment file: ${outputPath}`);
-    console.log("Skipping deployment and printing existing deployment info.");
+    console.log("Resuming and verifying recorded random deployment.");
     console.log("");
-    printDeploymentSummary(existing, outputPath);
-    return existing;
   }
 
   console.log("Deploying ERC-8004 Contracts (Random Address Mode)");
@@ -166,156 +135,142 @@ async function main() {
   const reputationImplArtifact = await hre.artifacts.readArtifact("ReputationRegistryUpgradeable");
   const validationImplArtifact = await hre.artifacts.readArtifact("ValidationRegistryUpgradeable");
 
-  console.log(`PHASE 1: Deploying ${minimalUUPSContract} Placeholder (CREATE)`);
-  console.log("=====================================================");
-  console.log("");
+  if (deployment.status.deployed) {
+    assertRecordedAddress(deployment.minimalUUPS.address, "MinimalUUPS");
+    assertRecordedAddress(deployment.proxies.identityRegistry, "IdentityRegistry proxy");
+    assertRecordedAddress(deployment.proxies.reputationRegistry, "ReputationRegistry proxy");
+    assertRecordedAddress(deployment.proxies.validationRegistry, "ValidationRegistry proxy");
+    assertRecordedAddress(deployment.implementations.identityRegistry, "IdentityRegistry implementation");
+    assertRecordedAddress(deployment.implementations.reputationRegistry, "ReputationRegistry implementation");
+    assertRecordedAddress(deployment.implementations.validationRegistry, "ValidationRegistry implementation");
 
-  console.log(`1. Deploying ${minimalUUPSContract} placeholder...`);
-  const minimalUUPS = await deployBytecode(
-    deployer,
-    publicClient,
-    minimalUUPSArtifact.bytecode as Hex,
-    minimalUUPSContract
-  );
-  console.log(`   ✅ Deployed at: ${minimalUUPS.address}`);
-  console.log(`   Tx: ${minimalUUPS.txHash}`);
-  console.log("");
+    await ensureCodeExists(publicClient, deployment.minimalUUPS.address, `${minimalUUPSContract} placeholder`);
+    await ensureCodeExists(publicClient, deployment.proxies.identityRegistry, "IdentityRegistry proxy");
+    await ensureCodeExists(publicClient, deployment.proxies.reputationRegistry, "ReputationRegistry proxy");
+    await ensureCodeExists(publicClient, deployment.proxies.validationRegistry, "ValidationRegistry proxy");
+    await ensureCodeExists(publicClient, deployment.implementations.identityRegistry, "IdentityRegistry implementation");
+    await ensureCodeExists(publicClient, deployment.implementations.reputationRegistry, "ReputationRegistry implementation");
+    await ensureCodeExists(publicClient, deployment.implementations.validationRegistry, "ValidationRegistry implementation");
 
-  console.log("PHASE 2: Deploying ERC1967 Proxies (CREATE)");
-  console.log("=============================================");
-  console.log("");
+    console.log("Existing random deployment found on-chain. Skipping CREATE phase.");
+    console.log("");
+  } else {
+    console.log(`PHASE 1: Deploying ${minimalUUPSContract} Placeholder (CREATE)`);
+    console.log("=====================================================");
+    console.log("");
 
-  console.log("2. Deploying IdentityRegistry proxy...");
-  const identityInitData = encodeFunctionData({
-    abi: minimalUUPSArtifact.abi,
-    functionName: "initialize",
-    args: ["0x0000000000000000000000000000000000000000" as `0x${string}`],
-  });
-  const identityProxyBytecode = await getProxyBytecode(minimalUUPS.address, identityInitData);
-  const identityProxy = await deployBytecode(
-    deployer,
-    publicClient,
-    identityProxyBytecode,
-    "IdentityRegistry proxy"
-  );
-  console.log(`   ✅ Deployed at: ${identityProxy.address}`);
-  console.log(`   Tx: ${identityProxy.txHash}`);
-  console.log("");
-
-  console.log("3. Deploying ReputationRegistry proxy...");
-  const reputationInitData = encodeFunctionData({
-    abi: minimalUUPSArtifact.abi,
-    functionName: "initialize",
-    args: [identityProxy.address],
-  });
-  const reputationProxyBytecode = await getProxyBytecode(minimalUUPS.address, reputationInitData);
-  const reputationProxy = await deployBytecode(
-    deployer,
-    publicClient,
-    reputationProxyBytecode,
-    "ReputationRegistry proxy"
-  );
-  console.log(`   ✅ Deployed at: ${reputationProxy.address}`);
-  console.log(`   Tx: ${reputationProxy.txHash}`);
-  console.log("");
-
-  console.log("4. Deploying ValidationRegistry proxy...");
-  const validationInitData = encodeFunctionData({
-    abi: minimalUUPSArtifact.abi,
-    functionName: "initialize",
-    args: [identityProxy.address],
-  });
-  const validationProxyBytecode = await getProxyBytecode(minimalUUPS.address, validationInitData);
-  const validationProxy = await deployBytecode(
-    deployer,
-    publicClient,
-    validationProxyBytecode,
-    "ValidationRegistry proxy"
-  );
-  console.log(`   ✅ Deployed at: ${validationProxy.address}`);
-  console.log(`   Tx: ${validationProxy.txHash}`);
-  console.log("");
-
-  console.log("PHASE 3: Deploying Implementation Contracts (CREATE)");
-  console.log("=====================================================");
-  console.log("");
-
-  console.log("5. Deploying IdentityRegistry implementation...");
-  const identityImpl = await deployBytecode(
-    deployer,
-    publicClient,
-    identityImplArtifact.bytecode as Hex,
-    "IdentityRegistryUpgradeable"
-  );
-  console.log(`   ✅ Deployed at: ${identityImpl.address}`);
-  console.log(`   Tx: ${identityImpl.txHash}`);
-  console.log("");
-
-  console.log("6. Deploying ReputationRegistry implementation...");
-  const reputationImpl = await deployBytecode(
-    deployer,
-    publicClient,
-    reputationImplArtifact.bytecode as Hex,
-    "ReputationRegistryUpgradeable"
-  );
-  console.log(`   ✅ Deployed at: ${reputationImpl.address}`);
-  console.log(`   Tx: ${reputationImpl.txHash}`);
-  console.log("");
-
-  console.log("7. Deploying ValidationRegistry implementation...");
-  const validationImpl = await deployBytecode(
-    deployer,
-    publicClient,
-    validationImplArtifact.bytecode as Hex,
-    "ValidationRegistryUpgradeable"
-  );
-  console.log(`   ✅ Deployed at: ${validationImpl.address}`);
-  console.log(`   Tx: ${validationImpl.txHash}`);
-  console.log("");
-
-  const output = {
-    mode: "random-create",
-    chainId,
-    networkName: networkName ?? "hardhat",
-    networkType,
-    deployer: deployer.account.address,
-    timestamp: new Date().toISOString(),
-    minimalUUPS: {
+    console.log(`1. Deploying ${minimalUUPSContract} placeholder...`);
+    const minimalUUPS = await deployBytecode(
+      deployer,
+      publicClient,
+      minimalUUPSArtifact.bytecode as Hex,
+      minimalUUPSContract
+    );
+    deployment.minimalUUPS = {
       contract: minimalUUPSContract,
       address: minimalUUPS.address,
       txHash: minimalUUPS.txHash,
-    },
-    proxies: {
-      identityRegistry: identityProxy.address,
-      reputationRegistry: reputationProxy.address,
-      validationRegistry: validationProxy.address,
-    },
-    implementations: {
-      identityRegistry: identityImpl.address,
-      reputationRegistry: reputationImpl.address,
-      validationRegistry: validationImpl.address,
-    },
-    transactions: {
-      minimalUUPS: minimalUUPS.txHash,
-      identityRegistryImplementation: identityImpl.txHash,
-      reputationRegistryImplementation: reputationImpl.txHash,
-      validationRegistryImplementation: validationImpl.txHash,
-      identityRegistryProxy: identityProxy.txHash,
-      reputationRegistryProxy: reputationProxy.txHash,
-      validationRegistryProxy: validationProxy.txHash,
-    },
-  };
+    };
+    deployment.transactions.minimalUUPS = minimalUUPS.txHash;
+    saveDeployment(outputPath, deployment);
+    console.log(`   ✅ Deployed at: ${minimalUUPS.address}`);
+    console.log(`   Tx: ${minimalUUPS.txHash}`);
+    console.log("");
 
-  fs.mkdirSync(outputDir, { recursive: true });
-  fs.writeFileSync(outputPath, JSON.stringify(output, null, 2));
+    console.log("PHASE 2: Deploying ERC1967 Proxies (CREATE)");
+    console.log("=============================================");
+    console.log("");
 
-  console.log("✅ Random deployment completed (no CREATE2 factory)");
+    console.log("2. Deploying IdentityRegistry proxy...");
+    const identityInitData = encodeFunctionData({
+      abi: minimalUUPSArtifact.abi,
+      functionName: "initialize",
+      args: ["0x0000000000000000000000000000000000000000" as Address],
+    });
+    const identityProxyBytecode = await getProxyBytecode(minimalUUPS.address, identityInitData);
+    const identityProxy = await deployBytecode(deployer, publicClient, identityProxyBytecode, "IdentityRegistry proxy");
+    deployment.proxies.identityRegistry = identityProxy.address;
+    deployment.transactions.identityRegistryProxy = identityProxy.txHash;
+    saveDeployment(outputPath, deployment);
+    console.log(`   ✅ Deployed at: ${identityProxy.address}`);
+    console.log(`   Tx: ${identityProxy.txHash}`);
+    console.log("");
+
+    console.log("3. Deploying ReputationRegistry proxy...");
+    const reputationInitData = encodeFunctionData({
+      abi: minimalUUPSArtifact.abi,
+      functionName: "initialize",
+      args: [identityProxy.address],
+    });
+    const reputationProxyBytecode = await getProxyBytecode(minimalUUPS.address, reputationInitData);
+    const reputationProxy = await deployBytecode(deployer, publicClient, reputationProxyBytecode, "ReputationRegistry proxy");
+    deployment.proxies.reputationRegistry = reputationProxy.address;
+    deployment.transactions.reputationRegistryProxy = reputationProxy.txHash;
+    saveDeployment(outputPath, deployment);
+    console.log(`   ✅ Deployed at: ${reputationProxy.address}`);
+    console.log(`   Tx: ${reputationProxy.txHash}`);
+    console.log("");
+
+    console.log("4. Deploying ValidationRegistry proxy...");
+    const validationInitData = encodeFunctionData({
+      abi: minimalUUPSArtifact.abi,
+      functionName: "initialize",
+      args: [identityProxy.address],
+    });
+    const validationProxyBytecode = await getProxyBytecode(minimalUUPS.address, validationInitData);
+    const validationProxy = await deployBytecode(deployer, publicClient, validationProxyBytecode, "ValidationRegistry proxy");
+    deployment.proxies.validationRegistry = validationProxy.address;
+    deployment.transactions.validationRegistryProxy = validationProxy.txHash;
+    saveDeployment(outputPath, deployment);
+    console.log(`   ✅ Deployed at: ${validationProxy.address}`);
+    console.log(`   Tx: ${validationProxy.txHash}`);
+    console.log("");
+
+    console.log("PHASE 3: Deploying Implementation Contracts (CREATE)");
+    console.log("=====================================================");
+    console.log("");
+
+    console.log("5. Deploying IdentityRegistry implementation...");
+    const identityImpl = await deployBytecode(deployer, publicClient, identityImplArtifact.bytecode as Hex, "IdentityRegistryUpgradeable");
+    deployment.implementations.identityRegistry = identityImpl.address;
+    deployment.transactions.identityRegistryImplementation = identityImpl.txHash;
+    saveDeployment(outputPath, deployment);
+    console.log(`   ✅ Deployed at: ${identityImpl.address}`);
+    console.log(`   Tx: ${identityImpl.txHash}`);
+    console.log("");
+
+    console.log("6. Deploying ReputationRegistry implementation...");
+    const reputationImpl = await deployBytecode(deployer, publicClient, reputationImplArtifact.bytecode as Hex, "ReputationRegistryUpgradeable");
+    deployment.implementations.reputationRegistry = reputationImpl.address;
+    deployment.transactions.reputationRegistryImplementation = reputationImpl.txHash;
+    saveDeployment(outputPath, deployment);
+    console.log(`   ✅ Deployed at: ${reputationImpl.address}`);
+    console.log(`   Tx: ${reputationImpl.txHash}`);
+    console.log("");
+
+    console.log("7. Deploying ValidationRegistry implementation...");
+    const validationImpl = await deployBytecode(deployer, publicClient, validationImplArtifact.bytecode as Hex, "ValidationRegistryUpgradeable");
+    deployment.implementations.validationRegistry = validationImpl.address;
+    deployment.transactions.validationRegistryImplementation = validationImpl.txHash;
+    deployment.status.deployed = true;
+    deployment.status.upgraded = false;
+    deployment.status.verified = false;
+    saveDeployment(outputPath, deployment);
+    console.log(`   ✅ Deployed at: ${validationImpl.address}`);
+    console.log(`   Tx: ${validationImpl.txHash}`);
+    console.log("");
+  }
+
+  console.log("✅ Random deployment completed (deploy phase only)");
   console.log(`✅ Proxies are initialized with ${minimalUUPSContract} (owner is set)`);
-  console.log("✅ Deployment record written to:", outputPath);
+  console.log(`✅ Deployment record written to: ${outputPath}`);
   console.log("");
-  printDeploymentSummary(output, outputPath);
+  printDeploymentSummary(deployment, outputPath, EXPECTED_OWNER);
 
-  return output;
+  console.log("NEXT STEPS:");
+  console.log("  1) npx hardhat run scripts/upgrade-rand.ts --network <network>");
+  console.log("  2) npx hardhat run scripts/verify-rand.ts --network <network>");
+  console.log("");
 }
 
 main().catch((error) => {

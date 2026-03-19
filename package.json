@@ -17,10 +17,16 @@
     "local:upgrade:vanity": "npx hardhat run scripts/upgrade-vanity.ts --network localhost",
     "local:upgrade:vanity:presigned": "npx hardhat run scripts/upgrade-vanity-presigned.ts --network localhost",
     "local:verify:vanity": "npx hardhat run scripts/verify-vanity.ts --network localhost",
+    "local:deploy:rand": "npx hardhat run scripts/deploy-rand.ts --network localhost",
+    "local:upgrade:rand": "npx hardhat run scripts/upgrade-rand.ts --network localhost",
+    "local:verify:rand": "npx hardhat run scripts/verify-rand.ts --network localhost",
     "find-salts": "npx hardhat run scripts/find-vanity-salts-parallel.ts --network localhost",
     "deploy:vanity": "npx hardhat run scripts/deploy-vanity.ts",
     "upgrade:vanity": "npx hardhat run scripts/upgrade-vanity.ts",
-    "verify:vanity": "npx hardhat run scripts/verify-vanity.ts"
+    "verify:vanity": "npx hardhat run scripts/verify-vanity.ts",
+    "deploy:rand": "npx hardhat run scripts/deploy-rand.ts",
+    "upgrade:rand": "npx hardhat run scripts/upgrade-rand.ts",
+    "verify:rand": "npx hardhat run scripts/verify-rand.ts"
   },
   "keywords": [],
   "author": "",
