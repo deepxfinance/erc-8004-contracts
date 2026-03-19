@@ -1,0 +1,32 @@
+{
+  "mode": "random-create",
+  "chainId": 97,
+  "networkName": "bnbTestnet",
+  "networkType": "testnet",
+  "deployer": "0x781ed35b167068c93dfadab41dfb680edaca4e50",
+  "timestamp": "2026-03-19T09:06:56.358Z",
+  "minimalUUPS": {
+    "contract": "MinimalUUPS",
+    "address": "0xe0e7b1326e95d052c2de8c82937d55015a5364b3",
+    "txHash": "0x4f8f2d7c0153dd35b8b93e57e0e70d71b98b15134ff1c823350b1e37097e1d43"
+  },
+  "proxies": {
+    "identityRegistry": "0xbe30dfbbe3c65d11c299b8857680dde22d892d83",
+    "reputationRegistry": "0xd032a0e508849681cafb25cd83862c0c20f191fb",
+    "validationRegistry": "0x7b08192f4de6cd031618ab617bdd500c58254e24"
+  },
+  "implementations": {
+    "identityRegistry": "0xf83dbaa9dac17400468099536eab5a1590e3bab5",
+    "reputationRegistry": "0x75d1b495e72975e5458ac049fd3656952255438d",
+    "validationRegistry": "0x5f336d9ed5228297303f10ab9283d0634e823614"
+  },
+  "transactions": {
+    "minimalUUPS": "0x4f8f2d7c0153dd35b8b93e57e0e70d71b98b15134ff1c823350b1e37097e1d43",
+    "identityRegistryImplementation": "0x86065ba44e8c6ab5654cafcdf73f9f57080599377f2989dc95511c47b19d8911",
+    "reputationRegistryImplementation": "0x41c6a634f3964fc3cb3b95b7a93306724bc1714268449a658b8d4dd50730a738",
+    "validationRegistryImplementation": "0xee1dd311a395c6c5adb9ba3a279bcf1e204367ea9f3d394ec8da7a71624fe8ab",
+    "identityRegistryProxy": "0xebda3a6143ae9616216ea169281c36c19ef7ec5efa792fe46e4ecae062464902",
+    "reputationRegistryProxy": "0xf20793e2fdbbdbe1d4e29f45dbe59c608959a1f7b5a8139231a74fb0bdcfeaa6",
+    "validationRegistryProxy": "0x49da91bda4f21b9813f29c8787cc8df0d055b3efe7aeadaae97bf4007282f7e3"
+  }
+}

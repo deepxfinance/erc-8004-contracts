@@ -11,6 +11,7 @@ import { privateKeyToAccount } from "viem/accounts";
 import { customChains } from "./custom-chains";
 import dotenv from "dotenv";
 import fs from "fs";
+import path from "path";
 import { getMinimalUUPSContract, getNetworkType } from "./addresses";
 
 dotenv.config();
@@ -21,6 +22,33 @@ function toPkEnvVar(networkName: string): string {
 
 function with0x(value: string): `0x${string}` {
   return (value.startsWith("0x") ? value : `0x${value}`) as `0x${string}`;
+}
+
+function printDeploymentSummary(deployment: any, outputPath: string) {
+  console.log("=".repeat(80));
+  console.log("DEPLOYMENT SUMMARY");
+  console.log("=".repeat(80));
+  console.log("");
+  console.log("Deployment record:", outputPath);
+  console.log("Mode:", deployment.mode);
+  console.log("Chain ID:", deployment.chainId);
+  console.log("Network:", deployment.networkName);
+  console.log("Deployer:", deployment.deployer);
+  console.log("");
+  if (deployment.proxies) {
+    console.log("Proxy Addresses:");
+    console.log("  IdentityRegistry:    ", deployment.proxies.identityRegistry);
+    console.log("  ReputationRegistry:  ", deployment.proxies.reputationRegistry);
+    console.log("  ValidationRegistry:  ", deployment.proxies.validationRegistry);
+    console.log("");
+  }
+  if (deployment.implementations) {
+    console.log("Implementation Addresses:");
+    console.log("  IdentityRegistry:    ", deployment.implementations.identityRegistry);
+    console.log("  ReputationRegistry:  ", deployment.implementations.reputationRegistry);
+    console.log("  ValidationRegistry:  ", deployment.implementations.validationRegistry);
+    console.log("");
+  }
 }
 
 /**
@@ -99,7 +127,7 @@ async function main() {
   }
 
   if (!deployer) {
-    const currentNetworkName = hre.network.name;
+    const currentNetworkName = networkName ?? "unknown";
     console.error("");
     console.error("❌ ERROR: No wallet configured for this network.");
     console.error("");
@@ -112,6 +140,18 @@ async function main() {
   const chainId = await publicClient.getChainId();
   const networkType = getNetworkType(chainId);
   const minimalUUPSContract = getMinimalUUPSContract(chainId);
+  const outputDir = path.join(process.cwd(), "deployments");
+  const outputPath = path.join(outputDir, `chain-${chainId}.json`);
+
+  if (fs.existsSync(outputPath)) {
+    const existingRaw = fs.readFileSync(outputPath, "utf-8");
+    const existing = JSON.parse(existingRaw);
+    console.log(`⚠️  Found existing deployment file: ${outputPath}`);
+    console.log("Skipping deployment and printing existing deployment info.");
+    console.log("");
+    printDeploymentSummary(existing, outputPath);
+    return existing;
+  }
 
   console.log("Deploying ERC-8004 Contracts (Random Address Mode)");
   console.log("====================================================");
@@ -236,7 +276,7 @@ async function main() {
   const output = {
     mode: "random-create",
     chainId,
-    networkName: networkName ?? hre.network.name,
+    networkName: networkName ?? "hardhat",
     networkType,
     deployer: deployer.account.address,
     timestamp: new Date().toISOString(),
@@ -266,26 +306,14 @@ async function main() {
     },
   };
 
-  const outputPath = `deploy-rand-chain-${chainId}.json`;
+  fs.mkdirSync(outputDir, { recursive: true });
   fs.writeFileSync(outputPath, JSON.stringify(output, null, 2));
 
-  console.log("=".repeat(80));
-  console.log("DEPLOYMENT COMPLETE");
-  console.log("=".repeat(80));
-  console.log("");
   console.log("✅ Random deployment completed (no CREATE2 factory)");
   console.log(`✅ Proxies are initialized with ${minimalUUPSContract} (owner is set)`);
   console.log("✅ Deployment record written to:", outputPath);
   console.log("");
-  console.log("Proxy Addresses:");
-  console.log("  IdentityRegistry:    ", identityProxy.address);
-  console.log("  ReputationRegistry:  ", reputationProxy.address);
-  console.log("  ValidationRegistry:  ", validationProxy.address);
-  console.log("");
-  console.log("Implementation Addresses:");
-  console.log("  IdentityRegistry:    ", identityImpl.address);
-  console.log("  ReputationRegistry:  ", reputationImpl.address);
-  console.log("  ValidationRegistry:  ", validationImpl.address);
+  printDeploymentSummary(output, outputPath);
 
   return output;
 }
