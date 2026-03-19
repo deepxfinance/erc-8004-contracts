@@ -41,4 +41,10 @@ export const customChains: Record<string, ReturnType<typeof defineChain>> = {
     nativeCurrency: { name: "BOL", symbol: "BOL", decimals: 18 },
     rpcUrls: { default: { http: ["https://betatest-rpc-node-ws.bool.network"] } },
   }),
+  deepxDevnet: defineChain({
+    id: 4835,
+    name: "DeepX Devnet",
+    nativeCurrency: { name: "DEX", symbol: "DEX", decimals: 18 },
+    rpcUrls: { default: { http: ["https://devnet-rpc.deepx.fi"] } },
+  }),
 };

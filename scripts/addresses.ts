@@ -59,6 +59,7 @@ export const TESTNET_CHAIN_IDS = [
   5042002,   // Arc Testnet
   11011,     // Shape Sepolia
   481,      // Bool Testnet
+  4835,     // DeepX Devnet
 ];
 
 /**

@@ -482,6 +482,15 @@ const config: HardhatUserConfig = {
           apiUrl: "https://beta-testnet.boolscan.com//api",
         }
       }
+    },
+    4835: {
+      name: "DeepX Devnet",
+      blockExplorers: {
+        blockscout: {
+          url: "https://explorer-testnet.deepdex.finance/",
+          apiUrl: "https://explorer-testnet.deepdex.finance/api",
+        }
+      }
     }
   },
   solidity: {
@@ -805,7 +814,7 @@ const config: HardhatUserConfig = {
     deepxDevnet: {
       type: "http",
       chainType: "l1",
-      url: process.env.DEEPX_DEVNET_RPC_URL || "https://alpha.megaeth.com/rpc",
+      url: process.env.DEEPX_DEVNET_RPC_URL || "https://devnet-rpc.deepx.fi",
       accounts: process.env.DEEPX_DEVNET_PRIVATE_KEY ? [process.env.DEEPX_DEVNET_PRIVATE_KEY] : [],
     },
     boolTestnet: {
