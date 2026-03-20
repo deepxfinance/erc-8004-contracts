@@ -4,33 +4,33 @@
   "networkName": "deepxDevnet",
   "networkType": "testnet",
   "deployer": "0x781ED35B167068c93dFAdAb41dfb680eDaca4E50",
-  "timestamp": "2026-03-19T10:32:08.913Z",
+  "timestamp": "2026-03-20T02:25:35.042Z",
   "minimalUUPS": {
     "contract": "MinimalUUPS",
-    "address": "0x75eaf4b0ffc0b2a3f4788eaca25f95cd5e19e5e2",
-    "txHash": "0x85382b223cd724ac743388595736f5035f8d69ad0024703a76a7ddee9d23d8e6"
+    "address": "0xe614b121c0609cfed12233e580ab301ea76989d0",
+    "txHash": "0xe3cd25cbbc3afec672f85a4fc78f173f41190f5389954c317057d7338a8117ef"
   },
   "proxies": {
-    "identityRegistry": "0x21a431f92778fa78655fc26130057b826e110cfe",
-    "reputationRegistry": "0xa0541c852ed12879ea387dd8184b3fcc48feb035",
-    "validationRegistry": "0xbf1780cadf61e2e8c6446553b977caadf879e984"
+    "identityRegistry": "0x5fe3213aeb0274e819564226f6a86236c1f7b758",
+    "reputationRegistry": "0x6772c3a1834481363dea01b3f80e317b0d7a1123",
+    "validationRegistry": "0x822ba5e1fe31d74cc387512f8d597b13dc45eb45"
   },
   "implementations": {
-    "identityRegistry": "0x0d986974844ce976af8009c1a265eef7575c1a8e",
-    "reputationRegistry": "0x20200011cfbe0c1f48842de9603a1d0b53d4580b",
-    "validationRegistry": "0x998fd693aa9281b86f16e27fd7e9bd8274306695"
+    "identityRegistry": "0xd03749970e770885707f3bdde92eefad2503c5c8",
+    "reputationRegistry": "0xc06bdd7b0a4b45d625e1d41d06c32a68eda2464b",
+    "validationRegistry": "0xe87f025408236fe946aba3ad1f859dfba205bbc3"
   },
   "transactions": {
-    "minimalUUPS": "0x85382b223cd724ac743388595736f5035f8d69ad0024703a76a7ddee9d23d8e6",
-    "identityRegistryProxy": "0x431113e85dc90b6eaef76715fd0fff0498701fb519b841f5826a44157cebe8e0",
-    "reputationRegistryProxy": "0xa776957b86a28a33f334f01d5d3b50e1e0e61a33a8bcc83b70da6ceab7ad915a",
-    "validationRegistryProxy": "0x7ab615b91ff888aec6c1b3855b1ba4569c56bad7eb4abf4778011177fbf0249a",
-    "identityRegistryImplementation": "0x91762fd1b4228e28311b11d123cf611558310f90cdd6fab6f31b3a995182c77e",
-    "reputationRegistryImplementation": "0x9aa35706798c3e8c8d8dea93bab3d3851a8dd92a7f34007e39ed862477dafd10",
-    "validationRegistryImplementation": "0x2fd9d7184790245b0aaf9fc29604fa6f5e8ed17e195908d79e094105c12cce29",
-    "identityRegistryUpgrade": "0x5b712eafbb59eea1fa7732305df4b26d07a1a3c4f7823754baa4555183af5dbd",
-    "reputationRegistryUpgrade": "0x496f944b291887052f32ff09963b55868e6e8f30a70649d3859f927944d2aefa",
-    "validationRegistryUpgrade": "0x45b6f9928907c0e5566391d2bc54e6b5f03dff29b08a66f5791fd5fad601a324"
+    "minimalUUPS": "0xe3cd25cbbc3afec672f85a4fc78f173f41190f5389954c317057d7338a8117ef",
+    "identityRegistryProxy": "0x4e658d74fbe095273a2324745383fd94bd421a734d863587c19989a39f21642a",
+    "reputationRegistryProxy": "0x323bbd26f3a060241da7b195d1b2a2bfdbb9c1961c5dee1fd153c3408ce0df9d",
+    "validationRegistryProxy": "0x56cf48ff61d90a4cf7eebd557c1b55cf4e07e85cbf21c4c18976a44fb976df68",
+    "identityRegistryImplementation": "0x2f551826f562043b9efe0de0ef00479adc8ac449a8e6df6b1c19f102697693a3",
+    "reputationRegistryImplementation": "0xab0e2a51c64b8451e7c0f0645f41a5bafd9067700add02adcc5e426ee1431f5a",
+    "validationRegistryImplementation": "0x8a5f35203ac6f5b06dbb1681fb9972882e81fff299b72a68e83183ccc761a697",
+    "identityRegistryUpgrade": "0xec3688d43dc09b7902803e43fdf4f95f6ca0d654bf8fa8c475ea6e88392e451d",
+    "reputationRegistryUpgrade": "0x9567c81db55209271be19650355e4216ea34ed97d00b32f03610c3296ec13b03",
+    "validationRegistryUpgrade": "0xe3930d18e76f7fcdb8c959faec008155213b4da66fbca471c3f74b04232a9700"
   },
   "status": {
     "deployed": true,

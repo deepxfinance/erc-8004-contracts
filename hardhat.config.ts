@@ -479,7 +479,7 @@ const config: HardhatUserConfig = {
       blockExplorers: {
         blockscout: {
           url: "https://beta-testnet.boolscan.com/",
-          apiUrl: "https://beta-testnet.boolscan.com//api",
+          apiUrl: "https://beta-testnet.boolscan.com/api",
         }
       }
     },
@@ -487,8 +487,8 @@ const config: HardhatUserConfig = {
       name: "DeepX Devnet",
       blockExplorers: {
         blockscout: {
-          url: "https://explorer-testnet.deepdex.finance/",
-          apiUrl: "https://explorer-testnet.deepdex.finance/api",
+          url: "https://explorer-devnet.deepx.fi/",
+          apiUrl: "https://explorer-devnet.deepx.fi/api",
         }
       }
     }
