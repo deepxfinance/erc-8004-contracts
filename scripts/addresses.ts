@@ -60,6 +60,7 @@ export const TESTNET_CHAIN_IDS = [
   11011,     // Shape Sepolia
   481,      // Bool Testnet
   4835,     // DeepX Devnet
+  4845,     // DeepX Beta Devnet
 ];
 
 /**

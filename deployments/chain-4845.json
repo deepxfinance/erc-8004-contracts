@@ -1,0 +1,41 @@
+{
+  "mode": "random-create",
+  "chainId": 4845,
+  "networkName": "deepxBetaDevnet",
+  "networkType": "testnet",
+  "deployer": "0x781ED35B167068c93dFAdAb41dfb680eDaca4E50",
+  "timestamp": "2026-04-02T06:25:47.294Z",
+  "minimalUUPS": {
+    "contract": "MinimalUUPS",
+    "address": "0x75eaf4b0ffc0b2a3f4788eaca25f95cd5e19e5e2",
+    "txHash": "0x569621ebefea773ba519ef423437f192d8901fb8061f9bf50eb94a79d8ce8c37"
+  },
+  "proxies": {
+    "identityRegistry": "0x21a431f92778fa78655fc26130057b826e110cfe",
+    "reputationRegistry": "0xa0541c852ed12879ea387dd8184b3fcc48feb035",
+    "validationRegistry": "0xbf1780cadf61e2e8c6446553b977caadf879e984"
+  },
+  "implementations": {
+    "identityRegistry": "0x0d986974844ce976af8009c1a265eef7575c1a8e",
+    "reputationRegistry": "0x20200011cfbe0c1f48842de9603a1d0b53d4580b",
+    "validationRegistry": "0x998fd693aa9281b86f16e27fd7e9bd8274306695"
+  },
+  "transactions": {
+    "minimalUUPS": "0x569621ebefea773ba519ef423437f192d8901fb8061f9bf50eb94a79d8ce8c37",
+    "identityRegistryProxy": "0x8903d3401d06290abe7a974e6a31c8c0095ff84c818ef24ca1ce2fcbdc1357ae",
+    "reputationRegistryProxy": "0x2c3829c9f61e5f0446610d9c6fc785ccb820160a5b25a207417e0d793f5111f3",
+    "validationRegistryProxy": "0xa20ffd5e17baa4810e954216a9b1a9dc602e01c926db944cbdb2db5d931913fc",
+    "identityRegistryImplementation": "0xf48f330834ecfc3260255a0d910adfd44710efc734ae3a100545bfd1098704ef",
+    "reputationRegistryImplementation": "0xfc1e468777ee40b944e196dafe74901c4304c699bca44765092de804b4e9821e",
+    "validationRegistryImplementation": "0x5f72b40bd16fb24b8802a92da3224cc66993234128414d40d888869a6e604226",
+    "identityRegistryUpgrade": "0x6aa86ba3fd5aa7964d55bd88513cd2946939aa2ebc6cfd79f5add156cc4d157f",
+    "reputationRegistryUpgrade": "0xe8a9a39826218b29d58f105d7e267a5bb05bd0503dfb49c2dffba6058e1f95ec",
+    "validationRegistryUpgrade": "0xc2bfe384f47854356c3b1feeccad294f70d98bea7d19a3afdf80dfd8b539a940"
+  },
+  "status": {
+    "deployed": true,
+    "upgraded": true,
+    "verified": true
+  },
+  "owner": "0x781ED35B167068c93dFAdAb41dfb680eDaca4E50"
+}
